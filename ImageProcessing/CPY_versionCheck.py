@@ -1,0 +1,1 @@
+# Purpose: Check installation of required packages to run Citrus Notes
