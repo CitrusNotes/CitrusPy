@@ -1,2 +1,2 @@
 # CitrusPy
-Repository of Python functions and testing
+Repository of Python functions and Testing

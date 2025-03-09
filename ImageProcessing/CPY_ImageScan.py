@@ -1,6 +1,6 @@
-import numpy
-import matplotlib
 import cv2
+import numpy as np
+import matplotlib as plot
 
 # Purpose: Scan media and digitalizes it                    FIXME
 #      
