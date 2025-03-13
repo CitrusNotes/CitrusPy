@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import matplotlib as plot
 from CPY_ImageScan import *
+import unittest
 
 if __name__ == "__main__":
     testImagePath = "ImageProcessing/testJPG/looseLeafExample.JPG"
@@ -33,10 +34,16 @@ if __name__ == "__main__":
 
         # Should have something here to apply different Thresholding
         # Canny Edge Detection
-        testImgGrayEdges = cv2.Canny(testImageGrayBlur,65,150)
-        cv2.imshow('Test Image Edges', testImgGrayEdges)
+        
+        # add threshold bar
+        thres1 = 45
+        thres2 = 125
+        testImgGrayEdges = cv2.Canny(testImageGrayBlur,thres1,thres2)
+        cv2.imshow(f'Test Image Edges {thres1} {thres2}', testImgGrayEdges)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
+        
+        
 
         # Image Closing - Perserves Larger Shapes
         kernel = np.ones((5,5))
