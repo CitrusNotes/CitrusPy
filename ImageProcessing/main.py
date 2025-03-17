@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import matplotlib as plot
 from CPY_ImageScan import *
+from CPY_Utils import *
 import unittest
 
 if __name__ == "__main__":
@@ -64,6 +65,45 @@ if __name__ == "__main__":
         cv2.destroyAllWindows()
 
         # Get Biggest Contour
-        # FIXME
+        testImgBiggestContours = testImage.copy()
+        bigContour, area = biggestContour(contours)
+        bigContour = contourCoordinateReordering(bigContour)
+        bigContour = bigContour.astype(int)
+        cv2.polylines(testImgBiggestContours, [bigContour], isClosed=True, color=(255, 150, 150), thickness=5)
+
+        # cv2.drawContours(testImgBiggestContours, bigContour, -1, (255, 150, 150), 5)
+        cv2.imshow('Test Image Biggest Contours', testImgBiggestContours)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
+        # warp 
+        # 2550 x 3300; we use these values + 40 to get rid of edges
+        width = 2590    # 3400
+        height = 3340   # 4400
+        source = np.float32(bigContour)
+        destination = np.float32([ [0, 0], [width, 0], [width, height], [0,height] ])
+        mMatrix = cv2.getPerspectiveTransform(source, destination)
+
+        paper = cv2.warpPerspective(testImage, mMatrix, (width, height))
+        paper = paper[20:paper.shape[0]-20,20:paper.shape[1]-20]
+        cv2.imshow('Scanned PDF', paper)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
+        gray_paper = cv2.warpPerspective(testImageGray, mMatrix, (width, height))
+        gray_paper = gray_paper[20:paper.shape[0]-20,20:paper.shape[1]-20]
+        cv2.imshow('Scanned Gray PDF', gray_paper)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
+        # binary scan
+        # apply thresholding
+        # bitwise not
+        # medianBlur
+
+        # pytesseract
+
+
+
         
 
