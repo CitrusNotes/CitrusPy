@@ -34,8 +34,9 @@ def ImageClosing(image: np.ndarray, kernel_size: int = 5, dil_iteration: int = 3
     newImage = cv2.erode(newImage, np.ones((5,5)), iterations=ero_iteration)
     return newImage
 
+# Contour Coordinate Reordering -->  
+# reorder points to top-left, top-right, bottom-right, bottom-left
 def contourCoordinateReordering(points):
-    # reorder points to top-left, top-right, bottom-right, bottom-left
     points = points.reshape(4, 2)
 
     orderedPoints = np.zeros((4, 2), dtype=np.float32)
@@ -49,9 +50,12 @@ def contourCoordinateReordering(points):
     orderedPoints = orderedPoints.reshape((4, 1, 2))
     return orderedPoints
 
+# Find Biggest Contour
 def BiggestContour(image: np.ndarray) -> np.ndarray:
     contours, _ = cv2.findContours(image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
+    
+    # deal with curves
+    contours = [cv2.convexHull(contour) for contour in contours]
     biggestContour = np.array({})
     maxArea = 0
     for contour in contours:
@@ -65,12 +69,15 @@ def BiggestContour(image: np.ndarray) -> np.ndarray:
     biggestContour = contourCoordinateReordering(biggestContour)
     return biggestContour
 
+# Get M Matrix (Camera Matrix)
 def GetMMatrix(source: np.ndarray, destination: np.ndarray) -> np.ndarray:
     return cv2.getPerspectiveTransform(source, destination)
 
+# Warp Perspective
 def WarpPerspective(image: np.ndarray, points: np.ndarray, width: int = 2590, height: int = 3340) -> np.ndarray:
     return cv2.warpPerspective(image, points, (width, height))
 
+# Scans Looseleaf
 def ScanDocument(imagePath: str, threshold1: int = 45, threshold2: int = 125, width: int = 2590, height: int = 3340, option: int = 0) -> np.ndarray:
     image = LoadImage(imagePath)
     grayImage = ConvertToGray(image)
