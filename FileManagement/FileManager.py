@@ -1,11 +1,7 @@
 
 '''
-Object oriented design for the file management:
-File implements item
-Folder implements item
-Manager class
+Refrence class diagram for object oriented design
 '''
-
 
 # Purpose: Receive a request from frontend to view user's data
 # 
