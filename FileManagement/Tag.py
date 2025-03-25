@@ -12,18 +12,7 @@ class Tag:
             return self.name == other.name
         return False
 
-    def __repr__(self) -> str:
+    def __repr__(self):
         # return a string representation of Tag
         return f"Tag(name={self.name}, color={self.color})"
-
-
-
-
-
-
-
-
-
-
-
 

@@ -1,42 +1,38 @@
 
+from Entry import Entry
 from File import File
 from Tag import Tag
 
-class Folder:
+class Folder(Entry):
 
     def __init__(self, name):
-        self.name = name
-        self.path = None
+        super().__init__(name)
         self.files = []
         self.subfolders = []
-        self.tags = []
-        self.is_starred = False
-        self.created_at = None # handle content metadata later
-        self.modified_at = None # handle content metadata later
-        self.size = None # handle content metadata later
-
-    def getName(self):
-        return self.name
-    
-    def getPath(self):
-        return self.path
-    
-    def getSize(self):
-        return self.size
     
     def addFile(self, file):
-        # to be implemented
-        pass
+        if not isinstance(file, File):
+            raise TypeError("file must be an instance of File class")
+        if file not in self.files:
+            self.files.append(file)
 
     def removeFile(self, file):
-        # to be implemented
-        pass
+        if not isinstance(file, File):
+            raise TypeError("file must be an instance of File class")
+        if file in self.files:
+            self.files.remove(file)
 
     def addSubfolder(self, folder):
-        # to be implemented
-        pass
+        if not isinstance(folder, Folder):
+            raise TypeError("folder must be an instance of Folder class")
+        if folder not in self.subfolders:
+            self.subfolders.append(folder)
 
     def removeSubfolder(self, folder):
-        # to be implemented
-        pass
+        if not isinstance(folder, Folder):
+            raise TypeError("folder must be an instance of Folder class")
+        if folder in self.subfolders:
+            self.subfolders.remove(folder)
 
+    def toJSON():
+        pass
