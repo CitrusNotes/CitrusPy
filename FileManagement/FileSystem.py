@@ -1,9 +1,11 @@
 # main.py
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File as UploadFileparam, Depends, Form
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from datetime import datetime
 from typing import List, Union, Optional
 import uvicorn
+import os
 
 from Classes import Tag, Entry, Folder, File
 
@@ -35,11 +37,12 @@ class FolderViewResponse(BaseModel):
 # database should use an adjacency list model for managing the filesystem tree (no circular dependencies)
 # using global ids and parent ids to ensure uniqueness of entries. the real database should implement 
 # something similar.
+# globalId, parentId, name, datecreated, (tags for files)
 fakeDb = {
     1: Folder(1, 2, "test", datetime(2025, 4, 11)),
     2: Folder(2, 0, "carrot", datetime(2025, 4, 12)),
-    3: File(3, 1, "test_file", datetime(2025, 1, 1), [Tag("tag1", "blue"), Tag("tag2", "green")]),
-    4: File(4, 1, "another_file", datetime(2025, 2, 2), [Tag("asfkjldjklasl kgdh  cjkxnbvbvxc")]),
+    3: File(3, 1, "test_file.txt", datetime(2025, 1, 1), [Tag("tag1", "blue"), Tag("tag2", "green")]),
+    4: File(4, 1, "another_file.txt", datetime(2025, 2, 2), [Tag("asfkjldjklasl kgdh  cjkxnbvbvxc")]),
     5: Folder(5, 0, "orange", datetime(2025, 4, 13)),
     6: Folder(6, 0, "apple", datetime(2025, 4, 14))
 }
@@ -137,25 +140,85 @@ class FileCreateRequest(BaseModel):
     createdAt: datetime
     tags: Optional[List[int]] = []
 
+    @classmethod
+    def as_form(
+        cls,
+        parentId: int = Form(...),
+        name: str = Form(...),
+        createdAt: datetime = Form(...),
+        tags: Optional[List[int]] = Form(None)
+    ):
+        if tags is None:
+            tags = []
+        return cls(parentId=parentId, name=name, createdAt=createdAt, tags=tags)
+
 # create file endpoint
 @app.post("/file")
-def create_file(fileReq: FileCreateRequest):
+async def create_file(
+    metadata: FileCreateRequest = Depends(FileCreateRequest.as_form),
+    fileData: UploadFile = UploadFileparam(...)
+):
     # replace everything with database queries
     newId = max(fakeDb.keys(), default=0) + 1
-    if fileReq.parentId != 0 and fileReq.parentId not in fakeDb:
+    if metadata.parentId != 0 and metadata.parentId not in fakeDb:
         raise HTTPException(status_code=404, detail="Parent folder not found")
+    
+    uploads_dir = "uploads"
+    os.makedirs(uploads_dir, exist_ok=True)
+    file_location = os.path.join(uploads_dir, fileData.filename)
+    try:
+        with open(file_location, "wb") as f:
+            content = await fileData.read()
+            f.write(content)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to save file: {e}")
 
     # handle creating tags later, once we discuss how to manage them
     tags = []
 
-    newFile = File(newId, fileReq.parentId, fileReq.name, fileReq.createdAt, tags)
+    newFile = File(newId, metadata.parentId, metadata.name, metadata.createdAt, tags)
     fakeDb[newId] = newFile
     
     return {"message": "File created successfully", "id": newId}
 
+
+# delete folder endpoint (requires some recursion to make sure all subentries are deleted too)
+@app.delete("/folder/{folderId}")
+def delete_folder(folderId: int):
+    return {"message": "not implemented yet"}
+
+
 # delete entry endpoint
+@app.delete("/file/{fileId}")
+def delete_file(fileId: int):
+    file = fakeDb.get(fileId)
+    if file is None:
+        raise HTTPException(status_code=404, detail="File not found")
+    if not isinstance(file, File):
+        raise HTTPException(status_code=400, detail="Specified entry is not a file")
+
+    del fakeDb[fileId]
+    return {"message": "File deleted successfully", "id": fileId}
+
 
 # download file endpoint
+@app.get("/file/download/{file_id}")
+def download_file(fileId: int):
+    file = fakeDb.get(fileId)
+    if file is None:
+        raise HTTPException(status_code=404, detail="File not found")
+    if not isinstance(file, File):
+        raise HTTPException(status_code=400, detail="Specified entry is not a file")
+    
+    # assume files are stored as "uploads/<filename>" for now. database later
+    uploads_dir = "uploads"
+    file_path = os.path.join(uploads_dir, file.getName())
+    
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="File content not found")
+    
+    return FileResponse(path=file_path, media_type="application/octet-stream", filename=file.getName())
+
 
 
 if __name__ == "__main__":
